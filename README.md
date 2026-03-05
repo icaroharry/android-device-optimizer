@@ -14,7 +14,7 @@ An [Agent Skill](https://agentskills.io) that analyzes and optimizes Android dev
 ## Install
 
 ```bash
-npx skillsadd icarominka/android-device-optimizer
+npx skills add icaroharry/android-device-optimizer
 ```
 
 ## Requirements
