@@ -4,12 +4,16 @@ An [Agent Skill](https://agentskills.io) that analyzes and optimizes Android dev
 
 ## What it does
 
-- Identifies your device (brand, model, chipset, RAM, battery)
+- Identifies your device (brand, model, chipset, RAM, battery, Android skin)
+- Detects the ROM/skin (MIUI, OneUI, ColorOS, OxygenOS) and adjusts safety thresholds
 - Pulls installed packages, running services, and memory usage
 - Cross-references against a known bloatware database (Motorola, Samsung, Xiaomi, OnePlus, Google, carrier bloat)
+- Classifies packages into safety tiers (SAFE / CAUTION / DANGEROUS)
+- Creates a restore point before making changes
 - Organizes findings into batches and prompts you before each one
-- Disables system bloat and uninstalls user apps with your approval
+- Removes DANGEROUS packages one at a time with reboot verification
 - Shows before/after metrics (RAM freed, services reduced)
+- Includes recovery procedures for boot loops
 
 ## Install
 
@@ -28,10 +32,11 @@ The skill includes setup instructions for enabling Developer Mode and installing
 
 ```
 android-device-optimizer/
-├── SKILL.md                        # Agent instructions and workflow
+├── SKILL.md                              # Agent instructions and workflow
 └── references/
-    ├── bloatware-db.md             # Known bloatware by OEM and category
-    └── protected-packages.md       # Critical packages that must never be touched
+    ├── bloatware-db.md                   # Known bloatware by OEM and category with safety tiers
+    ├── protected-packages.md             # Critical packages that must never be touched
+    └── recovery-procedures.md            # Boot loop recovery and parallel restore technique
 ```
 
 ## Supported OEMs
@@ -40,24 +45,34 @@ The bloatware database includes entries for:
 
 - **Motorola** — telemetry, desktop mode, game mode, AI services
 - **Samsung** — Bixby, AR Zone, game tools, diagnostics
-- **Xiaomi / Redmi** — analytics, MSA, Joyose, game center
+- **Xiaomi / Redmi / POCO** — analytics, MSA, Joyose, cloud services, game center
 - **OnePlus** — bug reports, OShare, HeyTap bloat
 - **Google** — pre-installed apps with unnecessary background services
 - **Carrier bloat** — DTI, Taboola, Aura, regional carrier apps
 
 ## How it works
 
-The agent follows a 5-phase workflow:
+The agent follows a 6-phase workflow:
 
-1. **Discover** — detect devices, collect specs
+1. **Discover** — detect devices, collect specs, identify Android skin
 2. **Analyze** — pull packages, services, memory usage
-3. **Classify** — organize into batches against the bloatware DB
-4. **Execute** — prompt the user per batch, then disable/uninstall
-5. **Verify** — show before/after comparison
+3. **Backup** — save restore point of all installed packages
+4. **Classify** — assign safety tiers, organize into batches
+5. **Execute** — prompt the user per batch; DANGEROUS packages removed one at a time with reboot verification
+6. **Verify** — show before/after comparison
 
 All changes are reversible:
-- System apps are disabled with `pm disable-user --user 0` (re-enable with `pm enable`)
-- User apps are uninstalled for the current user only (reinstallable from Play Store)
+- Packages are removed with `pm uninstall -k --user 0` (keeps data, reinstallable)
+- Can be restored with `cmd package install-existing <package>`
+- If a boot loop occurs, the parallel restore technique can recover the device
+
+## Safety tiers
+
+| Tier | Risk | Strategy |
+|------|------|----------|
+| **SAFE** | No boot risk | Remove in batches |
+| **CAUTION** | May affect OEM features | Remove in small groups (max 5) |
+| **DANGEROUS** | Can cause boot loops | Remove one at a time, reboot after each |
 
 ## License
 
